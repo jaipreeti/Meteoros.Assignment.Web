@@ -1,0 +1,174 @@
+﻿
+<h1>Sals</h1>
+<div class="container" style="box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);transition: 0.3s;width: 100%;">
+    <div class="card">
+        <form asp-action="Edit">
+            <div class="form-group">
+                <table class="table">
+                    <tr>
+                        <td>
+                            <label class="control-label">Customer Name</label>
+                            <select id="customerDropdown" class="form-control" style="height: 35px;width: 200px;background-color: whitesmoke;">
+                                <option value="-1">---select---</option>
+                            </select>
+                        </td>
+                        <td>
+                            <label class="control-label">Product Name</label>
+                            <select id="productDropdown" class="form-control" style="height: 35px;width: 200px;background-color: whitesmoke;" onchange="GetProductsbyId();">
+                                <option value="-1">---select---</option>
+                            </select>
+                        </td>
+                        <td>
+                            <label class="control-label">Price</label>
+                            <input type="text" class="form-control" id="price" readonly="readonly" />
+                        </td>
+                        <td>
+                            <label class="control-label">Discount</label>
+                            <input type="text" class="form-control" id="discount" readonly="readonly" />
+                        </td>
+                        <td>
+                            <label class="control-label">Sales Peice</label>
+                            <input type="text" class="form-control" id="salesprice" readonly="readonly" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="form-group">
+                <input type="button" value="Add Sales" class="btn btn-primary" id="addSales" />
+            </div>
+        </form>
+
+    </div>
+</div>
+<br />
+<div class="container" style="box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);transition: 0.3s;width: 100%;">
+    <div class="card">
+        <table id="Salestable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Product Name</th>
+                    <th>Sales Price</th>
+                    <th>Date</th>
+
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+
+        GetProductDropdown();
+        GetCustomerDropdown();
+        Salesdata();
+        $('#addSales').click(function () {
+            debugger;
+            var reqObj = {
+                "CustomerId": $('#customerDropdown').val(),
+                "ProductId": $('#productDropdown').val(),
+                "SalesPrice": $('#price').val(),
+                "Date": new Date()
+            }
+
+            $.ajax({
+                url: "https://localhost:7084/api/Sales",
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(reqObj),
+                success: function (data) {
+                    $("#customerDropdown").val("");
+                    $("#productDropdown").val("");
+                    $("#price").val("");
+                    Salesdata();
+                    alert('Record added successfully');
+                },
+                error: function (error, a, b, c) {
+                    alert('Error adding record');
+                }
+            });
+        });
+        function Salesdata() {
+
+            $.ajax({
+                url: "https://localhost:7084/api/Sales",
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    $.each(data, function (index, item) {
+                        $('#Salestable tbody').append('<tr><td>' + item.customerName + '</td><td>' + item.productName + '</td><td>' + item.salesPrice + '</td><td>' + item.salesDate + '</td></tr>');
+                    });
+                },
+                error: function (error) {
+                    console.error('Error fetching data: ', error);
+                }
+            });
+        };
+    });
+    
+
+    function GetCustomerDropdown() {
+        $.ajax({
+            url: 'https://localhost:7084/api/Customers/GetCustomersforDropdown',
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                $.each(data, function (index, item) {
+                    $('#customerDropdown').append($('<option>', {
+                        value: item.id,
+                        text: item.customerName
+                    }));
+                });
+            },
+            error: function (error) {
+                console.error('Error fetching data: ', error);
+            }
+        });
+
+    };
+    function GetProductDropdown() {
+        $.ajax({
+            url: 'https://localhost:7084/api/Product/GetProductsforDropdown',
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                $.each(data, function (index, item) {
+                    $('#productDropdown').append($('<option>', {
+                        value: item.id,
+                        text: item.name
+                    }));
+                });
+            },
+            error: function (error) {
+                console.error('Error fetching data: ', error);
+            }
+        });
+    };
+
+
+    function GetProductsbyId() {
+        debugger;
+        var id = $('#productDropdown').val();
+        var value = $('#productDropdown').find("option:selected").text();
+        debugger;
+        $.ajax({
+            url: 'https://localhost:7084/api/Product/' + id,
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                debugger;
+                $("#price").val(data.price);
+                $("#discount").val(data.discount);
+                var salesprice = (data.price * data.discount) / 100;
+                $("#salesprice").val(salesprice);
+            },
+            error: function (error) {
+                console.error('Error fetching data: ', error);
+            }
+        });
+    }
+
+    
+</script>
